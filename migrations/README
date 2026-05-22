@@ -1,1 +1,99 @@
-Generic single-database configuration.
+Wallet API
+REST API для управления балансом кошельков.
+Проект выполнен в рамках тестового задания Python Developer.
+
+Технологии
+FastAPI – асинхронный веб-фреймворк
+
+PostgreSQL – база данных (в Docker)
+
+SQLAlchemy 2.0 – ORM (асинхронный)
+
+Alembic – миграции
+
+Pytest – тестирование (SQLite in‑memory)
+
+Docker Compose – контейнеризация
+
+Функциональность
+Пополнение баланса (DEPOSIT)
+
+Списание средств (WITHDRAW) с проверкой достаточности
+
+Получение текущего баланса
+
+Конкурентная обработка запросов к одному кошельку (блокировка SELECT FOR UPDATE)
+
+Запуск
+Требования
+Docker Desktop (с поддержкой WSL2 на Windows)
+
+Git
+
+Инструкция
+bash
+git clone https://github.com/ваш-логин/wallet-api.git
+cd wallet-api
+docker-compose up -d --build
+После запуска API доступно по адресу:
+http://localhost:8000/docs – Swagger UI.
+
+Миграции
+Миграции применяются автоматически при запуске контейнера.
+Если нужно выполнить вручную:
+
+bash
+docker-compose exec app alembic upgrade head
+Примеры запросов
+Пополнение баланса
+bash
+curl -X POST "http://localhost:8000/api/v1/wallets/123e4567-e89b-12d3-a456-426614174000/operation" \
+  -H "Content-Type: application/json" \
+  -d '{"operation_type":"DEPOSIT","amount":100.50}'
+Списание
+bash
+curl -X POST "http://localhost:8000/api/v1/wallets/123e4567-e89b-12d3-a456-426614174000/operation" \
+  -H "Content-Type: application/json" \
+  -d '{"operation_type":"WITHDRAW","amount":30.00}'
+Получение баланса
+bash
+curl "http://localhost:8000/api/v1/wallets/123e4567-e89b-12d3-a456-426614174000"
+Тестирование
+После запуска контейнеров выполните:
+
+bash
+docker-compose exec app pytest tests/ -v
+Ожидаемый результат: 5 passed.
+
+Структура проекта
+text
+.
+├── app/                # Основной код приложения
+│   ├── main.py         # Эндпоинты
+│   ├── models.py       # SQLAlchemy модель
+│   ├── schemas.py      # Pydantic схемы
+│   ├── crud.py         # Операции с БД (блокировки)
+│   └── database.py     # Настройка подключения
+├── tests/              # Тесты (SQLite in‑memory)
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── alembic.ini
+└── pytest.ini
+Обработка конкурентности
+В методе update_balance используется SELECT FOR UPDATE, который блокирует строку кошелька до завершения транзакции. Это гарантирует корректное изменение баланса при параллельных запросах к одному кошельку.
+
+Решение
+Асинхронность – FastAPI + asyncpg
+
+Конкурентность – блокировка на уровне базы данных
+
+Инфраструктура – Docker Compose одной командой
+
+Тесты – покрыты основные сценарии + конкурентность
+
+Миграции – Alembic, автоматические при старте
+
+Контакты
+Тимур – https://github.com/KamilyanovTimur/Test_for_work
+
